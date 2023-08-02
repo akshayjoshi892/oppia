@@ -145,6 +145,14 @@ export class InteractiveItemSelectionInputComponent implements OnInit {
     }
   }
 
+  getAnswers(): string[] {
+    const htmlAnswers = Object.keys(this.userSelections).filter(
+      (obj) => this.userSelections[obj]);
+    return htmlAnswers.map(
+      html => (
+        this.choicesValue[this.choices.indexOf(html)].contentId as string));
+  }
+
   onToggleCheckbox(): void {
     this.newQuestion = false;
     this.selectionCount = Object.keys(this.userSelections).filter(
@@ -153,33 +161,32 @@ export class InteractiveItemSelectionInputComponent implements OnInit {
       this.selectionCount >= this.maxAllowableSelectionCount);
     this.notEnoughSelections = (
       this.selectionCount < this.minAllowableSelectionCount);
+    this.currentInteractionService.updateCurrentAnswer(this.getAnswers());
   }
 
   submitMultipleChoiceAnswer(event: MouseEvent, index: number): void {
     event.preventDefault();
     // Deselect previously selected option.
-    if ((event.currentTarget as HTMLDivElement).classList.contains(
-      'selected')) {
-      (event.currentTarget as HTMLDivElement).classList.remove('selected');
+    var selectedElement = (
+      document.querySelector(
+        'button.multiple-choice-option.selected'
+      )
+    );
+    if (selectedElement) {
+      selectedElement.classList.remove('selected');
     }
     // Selected current option.
     (event.currentTarget as HTMLDivElement).classList.add('selected');
     this.userSelections = {};
     this.userSelections[this.choices[index]] = true;
     this.notEnoughSelections = false;
-    if (!this.browserCheckerService.isMobileDevice()) {
-      this.submitAnswer();
-    }
+    this.currentInteractionService.updateCurrentAnswer(this.getAnswers());
   }
 
   submitAnswer(): void {
-    const htmlAnswers = Object.keys(this.userSelections).filter(
-      (obj) => this.userSelections[obj]);
-    const answers = htmlAnswers.map(
-      html => this.choicesValue[this.choices.indexOf(html)].contentId);
-
+    const answers = this.getAnswers();
     this.currentInteractionService.onSubmit(
-      answers as string | string[],
+      answers,
       this.itemSelectionInputRulesService as
       ItemSelectionInputRulesService);
   }
